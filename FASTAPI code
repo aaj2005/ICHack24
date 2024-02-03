@@ -1,0 +1,25 @@
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
+
+
+def fetch_website_content(url):
+    try:
+        # Make an HTTP GET request to the specified URL
+        response = requests.get(url)
+
+        # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            # Print the content of the website
+            print(response.text)
+        else:
+            # Print an error message if the request was not successful
+            print(f"Error: Unable to fetch website. Status code: {response.status_code}")
+    except requests.RequestException as e:
+        # Handle request exceptions (e.g., connection error)
+        print(f"Error: {e}")
+
+# Replace 'https://example.com' with the desired website URL
+        
+website_url = 'https://stackoverflow.com/'
+fetch_website_content(website_url)
+"""
