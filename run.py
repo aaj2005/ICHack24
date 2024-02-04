@@ -29,10 +29,10 @@ def home():
 
 @app.route("/consumeTerraWebhook", methods=["POST"])
 def consume_terra_webhook() -> flask.Response:
-    # body_str = str(request.get_data(), 'utf-8')
+    body_str = str(request.get_data(), 'utf-8')
     body = request.get_json()
-    
-    print(body)
+
+    print(request.headers)
     # ML to be inserted
     _LOGGER.info(
         "Received webhook for user %s of type %s",
@@ -45,18 +45,17 @@ def consume_terra_webhook() -> flask.Response:
       return flask.Response(status=403)
 
 base_url = "https://6b0c-2a0c-5bc0-40-3e3d-13ec-d32e-b440-2277.ngrok-free.app/"
-@app.route("/connect" )
+@app.route("/connect")
 def connect():
     response = requests.post("https://api.tryterra.co/v2/auth/generateWidgetSession", headers={ \
     "dev-id": DEV_ID, "x-api-key": API_KEY \
-    }, json={ "reference_id": "test-username", "lang": "en", 'auth_success_redirect_url': f'{base_url}/on_auth_success' })
+    }, json={ "reference_id": "test-username1", "lang": "en", 'auth_success_redirect_url': f'{base_url}/on_auth_success' })
     url = response.json()["url"]
     print(url, response.json())
-    return flask.redirect(url,code=302)
+    return url
 
 @app.route("/on_auth_success", methods=['GET'])
 def on_auth_success():
-   
    return "hello world"
     
 if __name__ == "__main__":
