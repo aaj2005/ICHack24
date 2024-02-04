@@ -70,6 +70,7 @@ from fastapi.responses import RedirectResponse
 from terra.base_client import Terra
 import requests
 import uvicorn
+import datetime
 
 app = FastAPI()
 
@@ -86,15 +87,18 @@ SECRET = "4edcc0dfbabb6a58094bcdf64c51595d7161773fcd6a267b"
 
 
 terra = Terra(API_KEY, DEV_ID, SECRET) 
-
+"""
 
 # USER_ID = "e036976a-027d-4eb2-8b9f-22ae3afbb382"
 # terra_user = terra.from_user_id(USER_ID)
 
 
+    
+
 @app.get('/login')
 async def auth():    
     # generates a widget to be shown to the user
+
     res = requests.post('https://api.tryterra.co/auth/generateWidgetSession',
         headers={ 
             'dev-id': DEV_ID, 
@@ -102,37 +106,21 @@ async def auth():
         },
         json={
             'reference_id': 'john',
-            'auth_success_redirect_url': f'{base_url}/on_auth_success' # after the user finishes connecting, we send em here
+            'auth_success_redirect_url': f'{base_url}/on_auth_success', # after the user finishes connecting, we send em here
         }
+        
     )
+    
 
     data = res.json()
     url = data['url']
+    print(url)
     return RedirectResponse(url)
 
 
+    
+
 # The user will be sent here after auth
-"""
-@app.get('/on_auth_success')
-async def auth_success(user_id: str, reference_id: str):
-
-    # test getting data for the new user_id
-    # you can also just store the user_id for later
-
-    res = requests.get('https://api.tryterra.co/v2/daily',
-        params={
-            'user_id': user_id, 
-            'start_date': '2024-01-25', 
-            'end_date': '2024-02-03', 
-            'with_samples': True, 
-            'to_webhook': False             # set this to true if you prefer we send the data to your database or to the webhook you can setup below
-        },
-        headers={
-            'dev-id': DEV_ID, 
-            'x-api-key': API_KEY 
-        }
-    )
-"""
 @app.post('/consumeTerraWebhook')
 async def consume_terra_webhook():
     # body_str = str(request.get_data(), 'utf-8')
@@ -143,6 +131,8 @@ async def consume_terra_webhook():
     _LOGGER.info(
         "Received webhook for user %s of type %s",
         body.get("user", {}).get("user_id"),
+        user_id = body.get("user", {}).get("user_id")
+
         body["type"])
     verified = terra.check_terra_signature(requests.get_data().decode("utf-8"), requests.headers['terra-signature'])
     if verified:
@@ -153,47 +143,37 @@ async def consume_terra_webhook():
     # test getting data for the new user_id
     # you can also just store the user_id for later
 
-    res = requests.get('https://api.tryterra.co/v2/daily',
-        params={
-            'user_id': user_id, 
-            'start_date': '2024-01-25', 
-            'end_date': '2024-02-03', 
-            'with_samples': True, 
-            'to_webhook': False             # set this to true if you prefer we send the data to your database or to the webhook you can setup below
-        },
-        headers={
-            'dev-id': DEV_ID, 
-            'x-api-key': API_KEY 
-        }
-    )
+"""
 
-    data = res.json()
+user_id = "e3e545ea-e2b3-4903-940b-ab0b6f5fce9e"
+ 
+Date_start = 0#get date for graphs
+Date_end = 0#get data for graphs
+Current_date= datetime.datetime.now()
+start_data = "2022-10-01"
+end_data = "2022-10-01"
+webhook = "true"
+samples = 'true'
 
-    print(data)
+print(Current_date)
 
-    return { 'user_id': user_id, 'ref': reference_id, 'data': data  }
+url = "https://api.tryterra.co/v2/sleep?user_id="+user_id+"&start_date="+start_data+"&end_date="+end_data+"&to_webhook="+webhook+"&with_samples="+samples
+print(url)
 
+headers = {
+    "accept": "application/json",
+    "dev-id": DEV_ID,
+    "x-api-key": API_KEY
+}
 
-# This is what a webhook looks like!
-#
-# But it won't work if it is localhost or http://127.0.0.1
-# Try use ngrok to make it public and provider the url for
-# the webhook to our https://dashboard.tryterra.co/connections :)
+response = requests.get(url, headers=headers)
 
-@app.post('/consume')
-async def consume(request: Request):
-    data = await request.json()
-
-    # you can now do whatever you want with the data
-    # checkout https://docs.tryterra.co/reference/v2
-    # to see what the data would look like.
-
-    return { 'success': 'ok' }
 
 
 # After your done, go to {base_url}/login to start using your
 # app.
 # Can't wait to see what you build!!!
-
+"""
 if __name__ == "__main__":
     uvicorn.run("run:app", host="127.0.0.1", port=8080, log_level="info")
+"""
