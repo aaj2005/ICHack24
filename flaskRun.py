@@ -3,6 +3,10 @@ import logging
 import flask
 from flask import request
 import requests
+from flask_cors import CORS
+
+
+import time
 
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
@@ -22,6 +26,9 @@ _LOGGER = logging.getLogger("app")
 
 
 app = flask.Flask(__name__)
+
+CORS(app)
+
 
 @app.route("/")
 def home():
@@ -51,12 +58,18 @@ def connect():
     "dev-id": DEV_ID, "x-api-key": API_KEY \
     }, json={ "reference_id": "test-username1", "lang": "en", 'auth_success_redirect_url': f'{base_url}/on_auth_success' })
     url = response.json()["url"]
+    session = response.json()["session_id"]
     print(url, response.json())
-    return url
+    return url, session_id
+
+
 
 @app.route("/on_auth_success", methods=['GET'])
 def on_auth_success():
-   return "hello world"
+    user = request.args.get('user')
+    print(user)
+    # time.sleep(3)
+    return user
     
 if __name__ == "__main__":
     app.run(host="localhost", port=8080)
