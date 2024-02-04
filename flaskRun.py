@@ -2,7 +2,7 @@
 from terra.base_client import Terra
 import logging
 import flask
-from flask import request
+from flask import request, Response
 import requests
 from flask_cors import CORS
 
@@ -102,6 +102,8 @@ def send():
     user_id = request.args.get("user_id")
     start_data = "2024-02-04"
     start_data = "2024-02-04"
+    # todo end_data ?
+    end_data = "2024-02-04"
     url = "https://api.tryterra.co/v2/sleep?user_id="+user_id+"&start_date="+start_data+"&end_date="+end_data+"&to_webhook=true&with_samples=true"
     headers = {
         "accept": "application/json",
@@ -123,12 +125,24 @@ def send():
 
     return f'Predicted Active minutes: {predictions/60}'
 
+
+clients = []
+def event_stream(data):
+    while True:
+        yield data
+@app.route('/events')
+def sse():
+    def gen():
+        clients.append(Response(event_stream(), content_type='text/event-stream'))
+        return clients[-1]
+    return gen()
 @app.route("/on_auth_success", methods=['GET'])
 def on_auth_success():
     user_id = request.args.get('user_id')
     print(user_id)
     # time.sleep(3)
     # send SSE
+    event_stream(user_id)
     return user_id
     
 
