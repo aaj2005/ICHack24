@@ -67,6 +67,7 @@ if __name__ == "__main__":
 """ 
 from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
+from terra.base_client import Terra
 import requests
 import uvicorn
 
@@ -75,11 +76,20 @@ app = FastAPI()
 # replace this with the root url for your app,
 # http://127.0.0.1:8000 if you're doing it locally or
 # use ngrok to generate a link like the one below :)
-base_url = 'https://climbing-cowbird-accurately.ngrok-free.app '
+base_url = 'https://5332-2a0c-5bc0-40-2e30-7c5a-c503-d505-ea6d.ngrok-free.app'
 
 
-dev_id = 'terradevelopers-testing-R9eMgehG2M'
-api_key = 'CrzavIPbL5oK_4vKvDiXIsvdk0IgP9pX'
+
+API_KEY = "O8sTDuQBXJfQDlULKMZrnOKlzzRNHMpi"
+DEV_ID = "ichack-testing-cgyBGcj290"
+SECRET = "4edcc0dfbabb6a58094bcdf64c51595d7161773fcd6a267b"
+
+
+terra = Terra(API_KEY, DEV_ID, SECRET) 
+
+
+# USER_ID = "e036976a-027d-4eb2-8b9f-22ae3afbb382"
+# terra_user = terra.from_user_id(USER_ID)
 
 
 @app.get('/login')
@@ -87,8 +97,8 @@ async def auth():
     # generates a widget to be shown to the user
     res = requests.post('https://api.tryterra.co/auth/generateWidgetSession',
         headers={ 
-            'dev-id': dev_id, 
-            'x-api-key': api_key
+            'dev-id': DEV_ID, 
+            'x-api-key': API_KEY
         },
         json={
             'reference_id': 'john',
@@ -102,7 +112,7 @@ async def auth():
 
 
 # The user will be sent here after auth
-
+"""
 @app.get('/on_auth_success')
 async def auth_success(user_id: str, reference_id: str):
 
@@ -118,8 +128,42 @@ async def auth_success(user_id: str, reference_id: str):
             'to_webhook': False             # set this to true if you prefer we send the data to your database or to the webhook you can setup below
         },
         headers={
-            'dev-id': dev_id, 
-            'x-api-key': api_key 
+            'dev-id': DEV_ID, 
+            'x-api-key': API_KEY 
+        }
+    )
+"""
+@app.post('/consumeTerraWebhook')
+async def consume_terra_webhook():
+    # body_str = str(request.get_data(), 'utf-8')
+    body = requests.get_json()
+    
+    print(body)
+    # ML to be inserted
+    _LOGGER.info(
+        "Received webhook for user %s of type %s",
+        body.get("user", {}).get("user_id"),
+        body["type"])
+    verified = terra.check_terra_signature(requests.get_data().decode("utf-8"), requests.headers['terra-signature'])
+    if verified:
+      return "verified"
+    else:
+      return "not verified"
+
+    # test getting data for the new user_id
+    # you can also just store the user_id for later
+
+    res = requests.get('https://api.tryterra.co/v2/daily',
+        params={
+            'user_id': user_id, 
+            'start_date': '2024-01-25', 
+            'end_date': '2024-02-03', 
+            'with_samples': True, 
+            'to_webhook': False             # set this to true if you prefer we send the data to your database or to the webhook you can setup below
+        },
+        headers={
+            'dev-id': DEV_ID, 
+            'x-api-key': API_KEY 
         }
     )
 
@@ -128,7 +172,6 @@ async def auth_success(user_id: str, reference_id: str):
     print(data)
 
     return { 'user_id': user_id, 'ref': reference_id, 'data': data  }
-
 
 
 # This is what a webhook looks like!
@@ -153,4 +196,4 @@ async def consume(request: Request):
 # Can't wait to see what you build!!!
 
 if __name__ == "__main__":
-    uvicorn.run("run:app", host="127.0.1.1", port=8080, log_level="info")
+    uvicorn.run("run:app", host="127.0.0.1", port=8080, log_level="info")
